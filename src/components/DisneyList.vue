@@ -6,9 +6,13 @@
         <button class="button-icon previous" @click="previousCharacter" :disabled="counter <= 0">Previous</button>
         <button class="button-icon next" @click="nextCharacter" :disabled="counter >= cards.length - 1">Next</button>
       </div>
-      <div class="card-content" :class="{ 'expanded': expanded }">
+      <div class="card-content" :class="{ 'expanded': expanded }" ref="cardContent">
         <disneyCard :key="currentCard._id" :card="currentCard" />
-        <button class="see-more" @click="toggleExpand">{{ expanded ? 'See less ↑' : 'See more ↓' }}</button>
+        <div class="gradient" v-show="shouldShowSeeMore"></div>
+        <button class="see-more" :class="{ 'expanded': expanded }" @click="toggleExpand"
+          v-show="expanded || shouldShowSeeMore">
+          {{ expanded ? 'See less ↑' : 'See more ↓' }}
+        </button>
       </div>
     </div>
   </div>
@@ -26,7 +30,8 @@ export default {
       cards: [],
       isLoading: true,
       counter: 0,
-      expanded: false
+      expanded: false,
+      contentHeight: 0
     };
   },
 
@@ -41,6 +46,23 @@ export default {
         this.isLoading = false;
       });
   },
+
+  mounted() {
+    this.$nextTick(() => {
+      if (this.$refs.cardContent) {
+        this.contentHeight = this.$refs.cardContent.clientHeight;
+      }
+    });
+  },
+
+  updated() {
+    this.$nextTick(() => {
+      if (this.$refs.cardContent) {
+        this.contentHeight = this.$refs.cardContent.clientHeight;
+      }
+    });
+  },
+
 
   components: { disneyCard },
 
@@ -58,7 +80,15 @@ export default {
 
     toggleExpand() {
       this.expanded = !this.expanded;
-    }
+    },
+
+    checkContentHeight() {
+      if (this.$refs.cardContent) {
+        this.contentHeight = this.$refs.cardContent.clientHeight;
+      } else {
+        this.contentHeight = 399;
+      }
+    },
   },
 
   computed: {
@@ -67,7 +97,11 @@ export default {
         return this.cards[this.counter];
       }
       return null;
-    }
+    },
+
+    shouldShowSeeMore() {
+      return !this.expanded && this.contentHeight > 400;
+    },
   }
 
 };
@@ -83,6 +117,7 @@ export default {
   max-width: 350px;
   margin-left: auto;
   margin-right: auto;
+  margin-bottom: 30px;
 }
 
 .card-header {
@@ -113,51 +148,54 @@ export default {
   font-size: 14px;
   font-weight: bold;
   text-align: center;
-  padding: 10px 15px;
+  padding: 5px 15px;
   text-decoration: none;
   display: inline-block;
   cursor: pointer;
-  transition: background-color 0.3s, box-shadow 0.3s;
   position: absolute;
-  bottom: 0;
   transform: translateX(-50%);
-  margin-bottom: 10px;
+  margin-bottom: 15px;
+  bottom: 0;
 }
 
-.see-more:hover,
-.see-more:focus {
-  background-color: #7a7aeb;
+.see-more.expanded {
+  bottom: -5px;
+  margin-bottom: 15px;
+}
+
+.see-more:hover {
+  background-color: #6d6dde;
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.3);
   outline: none;
 }
 
 /* Initial state */
 .card-content {
-  padding: 20px;
+  padding-bottom: 15px;
+  margin: 20px;
   position: relative;
-  max-height: 400px;
+  max-height: 450px;
   overflow: hidden;
-  transition: max-height 0.3s ease;
 }
 
-.card-content::before {
-    content: '';
-    position: absolute;
-    bottom: 0;
-    left: 0;
-    width: 100%;
-    height: 20%; 
-    background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
-    z-index: 1; 
+.gradient {
+  content: '';
+  position: absolute;
+  bottom: 0px;
+  left: 0;
+  width: 100%;
+  height: 20%;
+  background: linear-gradient(to top, rgba(255, 255, 255, 1), rgba(255, 255, 255, 0));
+  z-index: 1;
 }
 
 .card-content.expanded {
-  padding-bottom: 60px;
+  padding-bottom: 50px;
   max-height: 100%;
 }
 
 .card-content.expanded::before {
-    opacity: 0; 
+  opacity: 0;
 }
 
 @keyframes spin {
